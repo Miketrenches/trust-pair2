@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-yes: var(--yes);
+  --color-no: var(--no);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-baloo);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 1rem;
+  --background: #fdf3fa;
+  --foreground: #45356e;
+  --card: #ffffff;
+  --card-foreground: #45356e;
+  --popover: #ffffff;
+  --popover-foreground: #45356e;
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+  --secondary: #fbe3f3;
+  --secondary-foreground: #7c4a9e;
+  --muted: #f6ecf7;
+  --muted-foreground: #8d7bb5;
+  --accent: #f3e5ff;
+  --accent-foreground: #6d3bbf;
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
+  --border: #eeddf3;
+  --input: #e9d8f2;
+  --ring: #c4a9f5;
+  --yes: #16a37a;
+  --no: #e5527a;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-baloo), var(--font-sans), sans-serif;
+}
+
+/* Dreamy pastel sky, echoing the $TRUST artwork */
+.sky-gradient {
+  background:
+    radial-gradient(ellipse 80% 55% at 18% 8%, rgba(255, 205, 235, 0.9), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 85% 18%, rgba(190, 172, 245, 0.85), transparent 62%),
+    radial-gradient(ellipse 90% 60% at 50% 95%, rgba(255, 226, 240, 0.9), transparent 70%),
+    linear-gradient(180deg, #e8d9fb 0%, #f6d7ee 45%, #fdeef7 100%);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+}
+
+/* Faint candlestick columns, like the artwork's chart ghosting */
+.candles-bg {
+  position: relative;
+}
+.candles-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 34px,
+      rgba(255, 255, 255, 0.28) 34px,
+      rgba(255, 255, 255, 0.28) 44px,
+      transparent 44px,
+      transparent 78px,
+      rgba(255, 255, 255, 0.18) 78px,
+      rgba(255, 255, 255, 0.18) 88px
+    );
+  mask-image: linear-gradient(180deg, transparent 20%, black 90%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 20%, black 90%);
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-ticker {
+  animation: ticker-scroll 45s linear infinite;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+.animate-float {
+  animation: float-soft 6s ease-in-out infinite;
+}
+
+@keyframes sparkle-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+.animate-sparkle {
+  animation: sparkle-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.animate-live-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
