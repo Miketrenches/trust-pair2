@@ -267,4 +267,4 @@ export const CATEGORIES: ("All" | Category)[] = [
   "Pop culture",
 ];
 
-export const TRUST_CONTRACT = "4wR6GqBD62PQBFnkBwsiPKqnpsWrgYzoACPNeBaKtrst";
+export const TRUST_CONTRACT = "F34VYc981QwZXQTKaQhKAJf8R9iUEtozzjEjtkSNTRST";
