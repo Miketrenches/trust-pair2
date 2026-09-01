@@ -4,9 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { TRUST_CONTRACT } from "@/lib/markets";
-import { Check, Copy, Rocket, Sparkles } from "lucide-react";
+import { PAIRS, TRUST_CONTRACT } from "@/lib/markets";
+import { cn } from "@/lib/utils";
+import { Check, Copy } from "lucide-react";
+
+const TAPE = PAIRS.slice(0, 4);
 
 export function Hero() {
   const [copied, setCopied] = useState(false);
@@ -22,42 +24,35 @@ export function Hero() {
   };
 
   return (
-    <section className="sky-gradient candles-bg relative overflow-hidden">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-2 lg:gap-6 lg:pt-20 lg:pb-24">
-        <div className="relative z-10 flex flex-col items-start gap-6">
-          <Badge className="rounded-full border-white/70 bg-white/70 px-3 py-1 text-primary shadow-sm backdrop-blur">
-            <Sparkles className="size-3.5" />
-            The launchpad for conviction
-          </Badge>
+    <section className="relative overflow-hidden">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:gap-10 lg:pt-24 lg:pb-28">
+        <div className="flex flex-col items-start gap-6">
+          <p className="font-display text-xs text-primary">
+            Launch against the odds
+          </p>
 
-          <h1 className="font-display text-5xl leading-[1.05] font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-            Pair any memecoin with a{" "}
-            <span className="bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
-              live prediction market
-            </span>
+          <h1 className="font-sans text-4xl leading-[1.1] font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            Memecoins priced in conviction, not collateral
           </h1>
 
-          <p className="max-w-md text-lg text-foreground/70">
+          <p className="max-w-md text-base text-muted-foreground">
             Launchpads pair coins with SOL. stonk.fun pairs them with stocks.
-            Trust Markets pairs them with the odds themselves — your coin
-            trades against the YES share of a real market. Trust me bro.
+            Here your coin trades against the YES share of a real prediction
+            market. Trust me bro.
           </p>
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
               size="lg"
-              className="rounded-full bg-primary px-7 text-base shadow-lg shadow-primary/25 hover:bg-primary/90"
+              className="rounded-lg bg-primary px-7 text-base hover:bg-primary/90"
               asChild
             >
-              <Link href="#launch">
-                <Rocket />
-                Launch a coin
-              </Link>
+              <Link href="#launch">Launch a coin</Link>
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="rounded-full border-primary/30 bg-white/70 px-7 text-base text-primary backdrop-blur hover:bg-white"
+              className="rounded-lg border-border bg-card/70 px-7 text-base text-foreground backdrop-blur hover:bg-card"
               asChild
             >
               <Link href="#markets">Browse markets</Link>
@@ -66,9 +61,9 @@ export function Hero() {
 
           <button
             onClick={copyContract}
-            className="group mt-2 inline-flex max-w-full items-center gap-2 rounded-full border border-white/70 bg-white/60 px-4 py-2 font-mono text-xs text-muted-foreground backdrop-blur transition-colors hover:bg-white"
+            className="group mt-2 inline-flex max-w-full items-center gap-2 rounded-lg border border-border bg-card/70 px-4 py-2 font-mono text-xs text-muted-foreground backdrop-blur transition-colors hover:bg-card"
           >
-            <span className="font-sans font-semibold text-primary">$TRUST</span>
+            <span className="font-semibold text-primary">$TRUST</span>
             <span className="truncate">{TRUST_CONTRACT}</span>
             {copied ? (
               <Check className="size-3.5 shrink-0 text-yes" />
@@ -78,26 +73,58 @@ export function Hero() {
           </button>
         </div>
 
-        <div className="relative flex justify-center lg:justify-end">
-          <div className="animate-float relative">
-            <div className="absolute -inset-8 rounded-full bg-white/40 blur-3xl" aria-hidden />
-            <Image
-              src="/trust-hero.jpg"
-              alt="The $TRUST shiba, eyes closed, radiating pure trust"
-              width={460}
-              height={460}
-              priority
-              className="relative size-[300px] rounded-[2.5rem] object-cover shadow-2xl shadow-primary/20 ring-4 ring-white/70 sm:size-[380px] lg:size-[440px]"
-            />
-            <span className="animate-sparkle absolute -top-3 -right-2 text-3xl" aria-hidden>
-              ✨
+        <div className="glass overflow-hidden rounded-xl">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <span className="font-display text-xs text-primary">
+              Market tape
             </span>
-            <span
-              className="animate-sparkle absolute -bottom-2 -left-3 text-2xl [animation-delay:1.2s]"
-              aria-hidden
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="size-1.5 animate-live-dot rounded-full bg-yes" />
+              live
+            </span>
+          </div>
+
+          {TAPE.map((p) => (
+            <Link
+              key={p.id}
+              href="#markets"
+              className="flex items-center gap-3 border-b border-white/5 px-4 py-3 transition-colors hover:bg-white/5"
             >
-              ✨
-            </span>
+              <Image
+                src={p.image}
+                alt={`${p.coinName} logo`}
+                width={32}
+                height={32}
+                className="size-8 shrink-0 rounded-full object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">${p.symbol}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {p.market.question}
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="text-sm font-semibold">
+                  {p.priceInYes} <span className="text-xs text-muted-foreground">YES</span>
+                </p>
+                <p
+                  className={cn(
+                    "text-xs",
+                    p.change24h >= 0 ? "text-yes" : "text-no"
+                  )}
+                >
+                  {p.change24h >= 0 ? "+" : ""}
+                  {p.change24h}% · 24h
+                </p>
+              </div>
+            </Link>
+          ))}
+
+          <div className="flex items-center justify-between px-4 py-3 text-xs text-muted-foreground">
+            <span>{PAIRS.length} live pairs</span>
+            <Link href="#markets" className="text-primary hover:underline">
+              view all →
+            </Link>
           </div>
         </div>
       </div>

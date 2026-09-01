@@ -40,16 +40,13 @@ export function ApiSection() {
     <section id="api" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 lg:py-20">
       <div className="grid items-start gap-10 lg:grid-cols-2">
         <div>
-          <p className="text-xs font-semibold tracking-widest text-primary uppercase">
-            Developers
-          </p>
-          <h2 className="font-display mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-            Three calls to launch against the odds
+          <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            The API is three calls
           </h2>
           <p className="mt-3 max-w-md text-muted-foreground">
-            The public API mirrors the launchpads you already know — fetch the
-            pairable markets, prepare an atomic launch, claim your fees. Docs
-            and keys ship with mainnet.
+            Same shape as the launchpads you already know: fetch the pairable
+            markets, prepare an atomic launch, claim your fees. Docs and keys
+            ship with mainnet.
           </p>
 
           <div className="mt-8 flex flex-col gap-3">

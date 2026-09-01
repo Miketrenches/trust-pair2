@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Sparkline } from "@/components/sparkline";
 import type { CoinPair } from "@/lib/markets";
@@ -9,17 +10,19 @@ export function PairCard({ pair }: { pair: CoinPair }) {
   return (
     <article
       className={cn(
-        "group flex flex-col gap-4 rounded-2xl border bg-card p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10",
-        pair.flagship
-          ? "border-primary/40 ring-2 ring-primary/20"
-          : "border-border"
+        "flex flex-col gap-4 rounded-xl border bg-card p-5 transition-colors hover:border-primary/40",
+        pair.flagship ? "border-primary/40" : "border-border"
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center rounded-full bg-accent text-2xl">
-            {pair.emoji}
-          </span>
+          <Image
+            src={pair.image}
+            alt={`${pair.coinName} logo`}
+            width={44}
+            height={44}
+            className="size-11 rounded-full object-cover"
+          />
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-display text-lg font-bold leading-tight">
@@ -45,9 +48,9 @@ export function PairCard({ pair }: { pair: CoinPair }) {
           {pair.market.question}
         </p>
         <div className="mt-2 flex items-center gap-2">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-pink-400"
+              className="h-full rounded-full bg-primary"
               style={{ width: `${pair.market.yesPct}%` }}
             />
           </div>

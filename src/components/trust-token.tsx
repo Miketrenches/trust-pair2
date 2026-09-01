@@ -1,6 +1,5 @@
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Flame, Lock, PieChart, Sparkles } from "lucide-react";
+import { Flame, Lock, PieChart } from "lucide-react";
 
 const stats = [
   { label: "Total supply", value: "1,000,000,000", note: "fixed forever" },
@@ -29,15 +28,11 @@ const pillars = [
 
 export function TrustToken() {
   return (
-    <section id="token" className="sky-gradient candles-bg scroll-mt-20 py-16 lg:py-20">
+    <section id="token" className="scroll-mt-20 py-16 lg:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div>
-            <Badge className="rounded-full border-white/70 bg-white/70 px-3 py-1 text-primary shadow-sm backdrop-blur">
-              <Sparkles className="size-3.5" />
-              The token
-            </Badge>
-            <h2 className="font-display mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
+            <h2 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">
               $TRUST
             </h2>
             <p className="mt-1 font-display text-xl text-foreground/60">
@@ -72,7 +67,7 @@ export function TrustToken() {
                 alt="$TRUST artwork"
                 width={72}
                 height={72}
-                className="size-18 rounded-2xl object-cover ring-2 ring-white/80"
+                className="size-18 rounded-2xl object-cover ring-2 ring-border"
               />
               <div>
                 <p className="font-display text-lg font-bold">TRUST / FED-SEPT-YES</p>
@@ -83,7 +78,7 @@ export function TrustToken() {
             </div>
             {pillars.map((p) => (
               <div key={p.title} className="glass flex gap-4 rounded-2xl p-5">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/80 text-primary">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
                   <p.icon className="size-5" />
                 </span>
                 <div>

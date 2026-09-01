@@ -17,9 +17,7 @@ export function MarketsGrid() {
         <div>
           <div className="flex items-center gap-2">
             <span className="animate-live-dot size-2 rounded-full bg-yes" aria-hidden />
-            <p className="text-xs font-semibold tracking-widest text-yes uppercase">
-              Live pairs
-            </p>
+            <p className="text-sm font-medium text-yes">{PAIRS.length} live pairs</p>
           </div>
           <h2 className="font-display mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
             Coins trading against the odds
@@ -38,10 +36,10 @@ export function MarketsGrid() {
             key={c}
             onClick={() => setActive(c)}
             className={cn(
-              "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+              "rounded-lg border px-3.5 py-1.5 text-sm font-medium transition-colors",
               active === c
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-white/70 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                : "border-border bg-card/70 text-muted-foreground hover:border-primary/40 hover:text-foreground"
             )}
           >
             {c}
@@ -56,7 +54,7 @@ export function MarketsGrid() {
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-border bg-white/60 px-6 py-16 text-center">
+        <div className="rounded-2xl border border-dashed border-border bg-card/50 px-6 py-16 text-center">
           <p className="text-3xl" aria-hidden>
             🐕
           </p>

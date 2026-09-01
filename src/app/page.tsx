@@ -1,6 +1,5 @@
 import { SiteNav } from "@/components/site-nav";
 import { Hero } from "@/components/hero";
-import { OddsTicker } from "@/components/odds-ticker";
 import { MarketsGrid } from "@/components/markets-grid";
 import { LaunchSection } from "@/components/launch-section";
 import { HowItWorks } from "@/components/how-it-works";
@@ -14,7 +13,6 @@ export default function Home() {
       <SiteNav />
       <main className="flex-1">
         <Hero />
-        <OddsTicker />
         <MarketsGrid />
         <HowItWorks />
         <LaunchSection />

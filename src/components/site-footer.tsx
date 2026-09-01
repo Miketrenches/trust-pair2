@@ -1,10 +1,18 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "@/components/toast";
 import { TRUST_CONTRACT } from "@/lib/markets";
+
+function soon(e: React.MouseEvent) {
+  e.preventDefault();
+  toast("Soon. Trust me bro.");
+}
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-white/70">
+    <footer className="border-t border-border bg-black/40">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm">
@@ -14,7 +22,7 @@ export function SiteFooter() {
                 alt="Trust Markets logo"
                 width={32}
                 height={32}
-                className="size-8 rounded-full object-cover ring-2 ring-white"
+                className="size-8 rounded-full object-cover ring-2 ring-border"
               />
               <span className="font-display text-lg font-bold">
                 trust<span className="text-primary">markets</span>
@@ -49,9 +57,9 @@ export function SiteFooter() {
             <div>
               <p className="font-semibold">Community</p>
               <ul className="mt-3 space-y-2 text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground">X / Twitter</a></li>
-                <li><a href="#" className="hover:text-foreground">Telegram</a></li>
-                <li><a href="#" className="hover:text-foreground">Docs</a></li>
+                <li><a href="#" onClick={soon} className="hover:text-foreground">X / Twitter</a></li>
+                <li><a href="#" onClick={soon} className="hover:text-foreground">Telegram</a></li>
+                <li><a href="#" onClick={soon} className="hover:text-foreground">Docs</a></li>
               </ul>
             </div>
           </div>

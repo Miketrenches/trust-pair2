@@ -1,7 +1,10 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Wallet } from "lucide-react";
+import { toast } from "@/components/toast";
+import { Loader2, Wallet } from "lucide-react";
 
 const links = [
   { href: "#markets", label: "Markets" },
@@ -11,18 +14,31 @@ const links = [
   { href: "#api", label: "API" },
 ];
 
+const DEMO_ADDRESS = "7xKp…9fQ2";
+
 export function SiteNav() {
+  const [wallet, setWallet] = useState<"idle" | "connecting" | "connected">(
+    "idle"
+  );
+
+  const handleConnect = () => {
+    if (wallet === "connecting") return;
+    if (wallet === "connected") {
+      setWallet("idle");
+      toast("Wallet disconnected");
+      return;
+    }
+    setWallet("connecting");
+    setTimeout(() => {
+      setWallet("connected");
+      toast(`Connected as ${DEMO_ADDRESS} (demo)`);
+    }, 900);
+  };
+
   return (
-    <header className="sticky top-0 z-50 glass border-b border-white/60">
+    <header className="relative z-50">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="#" className="flex items-center gap-2.5">
-          <Image
-            src="/trust-art.png"
-            alt="Trust Markets logo"
-            width={36}
-            height={36}
-            className="size-9 rounded-full object-cover ring-2 ring-white/80"
-          />
+        <Link href="#" className="flex items-center">
           <span className="font-display text-xl font-bold tracking-tight text-foreground">
             trust<span className="text-primary">markets</span>
           </span>
@@ -44,14 +60,32 @@ export function SiteNav() {
           <Button
             variant="outline"
             size="sm"
-            className="hidden rounded-full border-primary/30 bg-white/70 text-primary hover:bg-primary/10 sm:inline-flex"
+            className="hidden rounded-lg border-primary/40 bg-transparent text-primary hover:bg-primary/10 sm:inline-flex"
             asChild
           >
             <Link href="#token">Buy $TRUST</Link>
           </Button>
-          <Button size="sm" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
-            <Wallet />
-            Connect
+          <Button
+            size="sm"
+            onClick={handleConnect}
+            className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            {wallet === "connecting" ? (
+              <>
+                <Loader2 className="animate-spin" />
+                Connecting…
+              </>
+            ) : wallet === "connected" ? (
+              <>
+                <Wallet />
+                <span className="font-mono">{DEMO_ADDRESS}</span>
+              </>
+            ) : (
+              <>
+                <Wallet />
+                Connect
+              </>
+            )}
           </Button>
         </div>
       </div>

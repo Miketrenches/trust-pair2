@@ -20,7 +20,8 @@ export interface CoinPair {
   id: string;
   coinName: string;
   symbol: string;
-  emoji: string;
+  /** Path to the coin's logo image, served from /public */
+  image: string;
   market: PredictionMarket;
   /** Price of the coin denominated in YES shares of the paired market */
   priceInYes: number;
@@ -32,6 +33,24 @@ export interface CoinPair {
 }
 
 export const MARKETS: PredictionMarket[] = [
+  {
+    id: "trump-nobel",
+    question: "Trump wins the Nobel Peace Prize by 2027?",
+    category: "Politics",
+    yesPct: 9,
+    delta24h: 2.1,
+    volume: "$11.6M",
+    resolves: "Oct 2027",
+  },
+  {
+    id: "gta6-delay",
+    question: "GTA 6 delayed again?",
+    category: "Pop culture",
+    yesPct: 71,
+    delta24h: -2.4,
+    volume: "$9.8M",
+    resolves: "Nov 2026",
+  },
   {
     id: "fed-sept",
     question: "Fed cuts rates at the September FOMC?",
@@ -128,23 +147,23 @@ const byId = Object.fromEntries(MARKETS.map((m) => [m.id, m]));
 
 export const PAIRS: CoinPair[] = [
   {
-    id: "trust-fed",
-    coinName: "Trust",
-    symbol: "TRUST",
-    emoji: "🐕",
-    market: byId["fed-sept"],
-    priceInYes: 0.0842,
-    change24h: 12.4,
-    marketCap: "$18.2M",
-    vol24h: "$2.4M",
-    spark: [4, 5, 4.5, 6, 5.5, 7, 6.5, 8, 7.5, 9, 8.8, 10, 9.5, 11, 12],
+    id: "trump-nobel-pair",
+    coinName: "Trump",
+    symbol: "TRUMP",
+    image: "/coins/trump.png",
+    market: byId["trump-nobel"],
+    priceInYes: 0.118,
+    change24h: 41.2,
+    marketCap: "$31.4M",
+    vol24h: "$5.6M",
+    spark: [3, 3.5, 3.2, 4, 4.8, 4.5, 5.5, 6, 6.8, 7.5, 8, 9, 10, 11.5, 13],
     flagship: true,
   },
   {
     id: "hopium-btc",
     coinName: "Hopium",
     symbol: "HOPIUM",
-    emoji: "🌈",
+    image: "/coins/hopium.png",
     market: byId["btc-250k"],
     priceInYes: 0.0031,
     change24h: 34.7,
@@ -156,7 +175,7 @@ export const PAIRS: CoinPair[] = [
     id: "copium-recession",
     coinName: "Copium",
     symbol: "COPIUM",
-    emoji: "😤",
+    image: "/coins/copium.png",
     market: byId["recession-26"],
     priceInYes: 0.0009,
     change24h: -8.2,
@@ -168,7 +187,7 @@ export const PAIRS: CoinPair[] = [
     id: "wagmi-gpt6",
     coinName: "Wagmi",
     symbol: "WAGMI",
-    emoji: "🤝",
+    image: "/coins/wagmi.png",
     market: byId["gpt6-2026"],
     priceInYes: 0.0124,
     change24h: 21.3,
@@ -177,11 +196,11 @@ export const PAIRS: CoinPair[] = [
     spark: [5, 5.5, 5.2, 6, 6.8, 6.4, 7, 7.5, 7.2, 8, 8.6, 8.2, 9, 9.8, 10.4],
   },
   {
-    id: "moonboi-sol",
-    coinName: "Moonboi",
-    symbol: "MOONBOI",
-    emoji: "🌙",
-    market: byId["sol-flip"],
+    id: "cyberleek-gta6",
+    coinName: "Cyberleek",
+    symbol: "CYBERLEEK",
+    image: "/coins/cyberleek.png",
+    market: byId["gta6-delay"],
     priceInYes: 0.0567,
     change24h: -3.1,
     marketCap: "$3.2M",
@@ -189,10 +208,10 @@ export const PAIRS: CoinPair[] = [
     spark: [7, 7.4, 7.1, 7.8, 7.5, 8, 7.6, 7.2, 7.5, 7, 6.8, 7.1, 6.9, 6.7, 6.8],
   },
   {
-    id: "bighands-chiefs",
-    coinName: "Big Hands",
-    symbol: "BIGHANDS",
-    emoji: "🙌",
+    id: "hodl-chiefs",
+    coinName: "Hodl",
+    symbol: "HODL",
+    image: "/coins/hodl.png",
     market: byId["chiefs-sb"],
     priceInYes: 0.0213,
     change24h: 6.9,
@@ -204,7 +223,7 @@ export const PAIRS: CoinPair[] = [
     id: "believe-aliens",
     coinName: "Believe",
     symbol: "BELIEVE",
-    emoji: "👽",
+    image: "/coins/coin-believe.png",
     market: byId["aliens"],
     priceInYes: 0.00042,
     change24h: 88.5,
@@ -216,7 +235,7 @@ export const PAIRS: CoinPair[] = [
     id: "ballot-senate",
     coinName: "Ballot Box",
     symbol: "BALLOT",
-    emoji: "🗳️",
+    image: "/coins/coin-ballot.png",
     market: byId["senate-flip"],
     priceInYes: 0.0088,
     change24h: -1.4,
@@ -228,7 +247,7 @@ export const PAIRS: CoinPair[] = [
     id: "swiftie-tour",
     coinName: "Swiftie",
     symbol: "SWIFTIE",
-    emoji: "💜",
+    image: "/coins/coin-swiftie.png",
     market: byId["swift-tour"],
     priceInYes: 0.0035,
     change24h: 15.8,
@@ -248,4 +267,4 @@ export const CATEGORIES: ("All" | Category)[] = [
   "Pop culture",
 ];
 
-export const TRUST_CONTRACT = "trusTm3Bro1111111111111111111111111111111111";
+export const TRUST_CONTRACT = "4wR6GqBD62PQBFnkBwsiPKqnpsWrgYzoACPNeBaKtrst";
