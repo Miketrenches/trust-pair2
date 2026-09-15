@@ -1,18 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/toast";
+import {
+  type ChainMemo,
+  MEMO_BYTE_LIMIT,
+  type WalletProvider,
+  fetchFeed,
+  getWalletProvider,
+  sendMemo,
+  short,
+  timeAgo,
+} from "@/lib/solana";
 
 const MEMO_CA = "MEMob64KfyPHcmLo3sQeWqR9uT2vXaZ1jN8dCkE5pump";
-
-/* ---------- fake helpers ---------- */
-
-const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-function fakeSig() {
-  const c = () => B58[Math.floor(Math.random() * B58.length)];
-  return `${c()}${c()}${c()}${c()}\u2026${c()}${c()}${c()}${c()}`;
-}
 
 /* ---------- calculator beeps ---------- */
 
@@ -45,52 +47,44 @@ const PADS = [
   { label: "SND-8", freq: 1047 },
 ];
 
-/* ---------- feed ---------- */
+/* ---------- memo text rendering: URLs become embeds ---------- */
 
-type FeedItem = {
-  id: number;
-  from: string;
-  sig: string;
-  age: string;
-  text: string;
-  img?: string;
-  snd?: boolean;
-  lnk?: string;
-};
+const URL_RE = /https?:\/\/[^\s]+/g;
+const IMG_EXT = /\.(png|jpe?g|gif|webp|avif)(\?|#|$)/i;
+const SND_EXT = /\.(mp3|wav|ogg|m4a)(\?|#|$)/i;
 
-const SEED_FEED: FeedItem[] = [
-  {
-    id: 4,
-    from: "7xKp\u20269fQ2",
-    sig: "3gVa\u2026Jw8d",
-    age: "2m",
-    text: "gm. inscribing this so nobody can delete it.",
-  },
-  {
-    id: 3,
-    from: "Fj2w\u2026k3Lm",
-    sig: "9tRe\u2026Bq1x",
-    age: "11m",
-    text: "state of the market rn",
-    img: "/coins/copium.png",
-  },
-  {
-    id: 2,
-    from: "9aQz\u2026mm21",
-    sig: "5Kd3\u20269fQz",
-    age: "34m",
-    text: "leaked CT spaces audio (3s)",
-    snd: true,
-  },
-  {
-    id: 1,
-    from: "B33f\u2026c0de",
-    sig: "8Hnn\u2026Vv2p",
-    age: "1h",
-    text: "whitepaper is a link now",
-    lnk: "memo.fun/wp",
-  },
-];
+function MemoBody({ text }: { text: string }) {
+  const urls = text.match(URL_RE) ?? [];
+  const plain = text.replace(URL_RE, "").trim();
+  return (
+    <>
+      {plain && <p className="mt-1 break-words">{plain}</p>}
+      {urls.map((u, i) =>
+        IMG_EXT.test(u) ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            key={i}
+            src={u}
+            alt="memo attachment"
+            className="mt-2 max-h-28 border border-border object-contain"
+          />
+        ) : SND_EXT.test(u) ? (
+          <audio key={i} src={u} controls className="mt-2 h-8 w-full max-w-xs" />
+        ) : (
+          <a
+            key={i}
+            href={u}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 block truncate text-xs underline underline-offset-4 hover:text-accent"
+          >
+            &#8599; {u}
+          </a>
+        )
+      )}
+    </>
+  );
+}
 
 /* ---------- panel chrome ---------- */
 
@@ -118,84 +112,113 @@ function Panel({
 
 /* ---------- main ---------- */
 
+type Attach = { kind: "IMG" | "SND" | "LNK"; url: string };
+
 export function MemoApp() {
-  const [wallet, setWallet] = useState<"idle" | "connecting" | "connected">("idle");
+  const [provider, setProvider] = useState<WalletProvider | null>(null);
+  const [pubkey, setPubkey] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
   const [msg, setMsg] = useState("");
   const [to, setTo] = useState("");
-  const [img, setImg] = useState<string | null>(null);
-  const [snd, setSnd] = useState<string | null>(null);
-  const [lnk, setLnk] = useState<string | null>(null);
-  const [linkDraft, setLinkDraft] = useState("");
-  const [askLink, setAskLink] = useState(false);
+  const [attachments, setAttachments] = useState<Attach[]>([]);
+  const [askAttach, setAskAttach] = useState<"IMG" | "SND" | "LNK" | null>(null);
+  const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
-  const [feed, setFeed] = useState<FeedItem[]>(SEED_FEED);
+  const [feed, setFeed] = useState<ChainMemo[] | null>(null);
   const [clock, setClock] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [flash, setFlash] = useState<number | null>(null);
-  const imgRef = useRef<HTMLInputElement>(null);
-  const sndRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const tick = () =>
-      setClock(new Date().toISOString().slice(11, 19) + " UTC");
+    setProvider(getWalletProvider());
+    const tick = () => setClock(new Date().toISOString().slice(11, 19) + " UTC");
     tick();
     const t = setInterval(tick, 1000);
     return () => clearInterval(t);
   }, []);
 
-  const bytes =
-    new TextEncoder().encode(msg).length +
-    (img ? 4212 : 0) +
-    (snd ? 9840 : 0) +
-    (lnk ? lnk.length : 0);
+  const refreshFeed = useCallback(async () => {
+    try {
+      setFeed(await fetchFeed(20));
+    } catch {
+      setFeed((f) => f ?? []);
+      toast("ERR: RPC FEED FETCH FAILED");
+    }
+  }, []);
 
-  const connect = () => {
+  useEffect(() => {
+    refreshFeed();
+    const t = setInterval(refreshFeed, 30000);
+    return () => clearInterval(t);
+  }, [refreshFeed]);
+
+  const fullMemo = [msg.trim(), ...attachments.map((a) => a.url)]
+    .filter(Boolean)
+    .join("\n");
+  const bytes = new TextEncoder().encode(fullMemo).length;
+
+  const connect = async () => {
     beep(660, 0.08);
-    if (wallet === "connecting") return;
-    if (wallet === "connected") {
-      setWallet("idle");
+    const p = getWalletProvider();
+    if (!p) {
+      toast("NO WALLET FOUND \u00b7 INSTALL PHANTOM");
+      window.open("https://phantom.app", "_blank");
+      return;
+    }
+    setProvider(p);
+    if (pubkey) {
+      await p.disconnect().catch(() => {});
+      setPubkey(null);
       toast("WALLET DISCONNECTED");
       return;
     }
-    setWallet("connecting");
-    setTimeout(() => {
-      setWallet("connected");
-      toast("CONNECTED AS 7xKp\u20269fQ2 [DEMO]");
-    }, 900);
+    try {
+      setConnecting(true);
+      await p.connect();
+      const k = p.publicKey?.toString() ?? null;
+      setPubkey(k);
+      if (k) toast(`CONNECTED: ${short(k)}`);
+    } catch {
+      toast("ERR: CONNECTION REJECTED");
+    } finally {
+      setConnecting(false);
+    }
   };
 
-  const inscribe = () => {
+  const inscribe = async () => {
     beep(784, 0.1);
     if (busy) return;
-    if (!msg && !img && !snd && !lnk) {
+    if (!fullMemo) {
       toast("ERR: EMPTY MEMO");
       beep(180, 0.25);
       return;
     }
+    if (bytes > MEMO_BYTE_LIMIT) {
+      toast(`ERR: MEMO TOO BIG (${bytes}/${MEMO_BYTE_LIMIT} BYTES)`);
+      beep(180, 0.25);
+      return;
+    }
+    if (!provider || !pubkey) {
+      toast("ERR: CONNECT WALLET FIRST");
+      beep(180, 0.25);
+      return;
+    }
     setBusy(true);
-    setTimeout(() => {
-      const sig = fakeSig();
-      setFeed((f) => [
-        {
-          id: Date.now(),
-          from: wallet === "connected" ? "7xKp\u20269fQ2" : "ANON",
-          sig,
-          age: "now",
-          text: msg || "(no text)",
-          img: img ?? undefined,
-          snd: !!snd,
-          lnk: lnk ?? undefined,
-        },
-        ...f,
-      ]);
-      setMsg("");
-      setImg(null);
-      setSnd(null);
-      setLnk(null);
-      setBusy(false);
+    try {
+      const sig = await sendMemo(provider, pubkey, fullMemo, to.trim() || undefined);
       playJingle();
-      toast(`MEMO INSCRIBED \u00b7 TX ${sig} [DEMO]`);
-    }, 1200);
+      toast(`MEMO INSCRIBED \u00b7 TX ${short(sig)}`);
+      setMsg("");
+      setTo("");
+      setAttachments([]);
+      refreshFeed();
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "unknown";
+      toast(`ERR: ${m.slice(0, 80).toUpperCase()}`);
+      beep(180, 0.3);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const copyCa = async () => {
@@ -216,6 +239,15 @@ export function MemoApp() {
     setTimeout(() => setFlash(null), 200);
   };
 
+  const addAttachment = () => {
+    if (draft && askAttach) {
+      setAttachments((a) => [...a, { kind: askAttach, url: draft }]);
+      beep(880, 0.08);
+    }
+    setDraft("");
+    setAskAttach(null);
+  };
+
   return (
     <main className="relative z-10 mx-auto flex h-dvh max-w-6xl flex-col gap-3 p-3 sm:p-4">
       {/* ---- top bar ---- */}
@@ -231,18 +263,18 @@ export function MemoApp() {
             style={{ objectFit: "cover", aspectRatio: "5 / 2" }}
           />
           <div className="hidden text-xs leading-tight text-muted-foreground sm:block">
-            <p>SOLANA MEMO TERMINAL v1.0</p>
+            <p>SOLANA MEMO TERMINAL v1.0 &#183; MAINNET</p>
             <p>PICTURES / SOUNDS / LINKS &#8594; TX MEMOS</p>
           </div>
         </div>
         <button
           onClick={connect}
-          className="border border-border bg-background px-3 py-1.5 text-sm hover:bg-primary hover:text-primary-foreground hover:text-shadow-none"
+          className="border border-border bg-background px-3 py-1.5 text-sm hover:bg-primary hover:text-primary-foreground"
         >
-          {wallet === "connecting"
+          {connecting
             ? "[ LINKING\u2026 ]"
-            : wallet === "connected"
-              ? "[ 7xKp\u20269fQ2 ]"
+            : pubkey
+              ? `[ ${short(pubkey)} ]`
               : "[ CONNECT ]"}
         </button>
       </header>
@@ -252,7 +284,11 @@ export function MemoApp() {
         {/* composer */}
         <Panel
           label="COMPOSER"
-          right={<span className="text-muted-foreground">{bytes} BYTES</span>}
+          right={
+            <span className={bytes > MEMO_BYTE_LIMIT ? "text-accent" : "text-muted-foreground"}>
+              {bytes}/{MEMO_BYTE_LIMIT} BYTES
+            </span>
+          }
         >
           <div className="flex min-h-0 flex-1 flex-col gap-3 p-3">
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -260,7 +296,7 @@ export function MemoApp() {
               <input
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                placeholder="address / tx signature (optional)"
+                placeholder="recipient address (optional)"
                 className="w-full border border-border bg-background px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
               />
             </label>
@@ -272,52 +308,40 @@ export function MemoApp() {
               className="min-h-0 w-full flex-1 resize-none border border-border bg-background p-2 text-sm placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
             />
 
-            {/* attachment chips */}
-            {(img || snd || lnk) && (
+            {attachments.length > 0 && (
               <div className="flex flex-wrap gap-2 text-xs">
-                {img && (
-                  <button onClick={() => setImg(null)} className="flex items-center gap-2 border border-border bg-muted px-2 py-1 hover:border-primary">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img} alt="attachment" className="size-6 object-cover" />
-                    IMG ATTACHED [x]
+                {attachments.map((a, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setAttachments((x) => x.filter((_, j) => j !== i))}
+                    className="max-w-full truncate border border-border bg-muted px-2 py-1 hover:border-primary"
+                    title="remove"
+                  >
+                    {a.kind === "IMG" ? "\u25a3" : a.kind === "SND" ? "\u266a" : "\u2197"}{" "}
+                    {a.url} [x]
                   </button>
-                )}
-                {snd && (
-                  <button onClick={() => setSnd(null)} className="border border-border bg-muted px-2 py-1 hover:border-primary">
-                    &#9834; {snd} [x]
-                  </button>
-                )}
-                {lnk && (
-                  <button onClick={() => setLnk(null)} className="border border-border bg-muted px-2 py-1 hover:border-primary">
-                    &#8599; {lnk} [x]
-                  </button>
-                )}
+                ))}
               </div>
             )}
 
-            {askLink && (
+            {askAttach && (
               <div className="flex gap-2 text-sm">
                 <input
                   autoFocus
-                  value={linkDraft}
-                  onChange={(e) => setLinkDraft(e.target.value)}
-                  placeholder="https://"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder={
+                    askAttach === "IMG"
+                      ? "https://\u2026 .png / .jpg / .gif"
+                      : askAttach === "SND"
+                        ? "https://\u2026 .mp3 / .wav / .ogg"
+                        : "https://"
+                  }
                   className="w-full border border-border bg-background px-2 py-1 placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && linkDraft) {
-                      setLnk(linkDraft);
-                      setLinkDraft("");
-                      setAskLink(false);
-                      beep(880, 0.08);
-                    }
-                  }}
+                  onKeyDown={(e) => e.key === "Enter" && addAttachment()}
                 />
                 <button
-                  onClick={() => {
-                    if (linkDraft) setLnk(linkDraft);
-                    setLinkDraft("");
-                    setAskLink(false);
-                  }}
+                  onClick={addAttachment}
                   className="border border-border px-2 hover:bg-primary hover:text-primary-foreground"
                 >
                   OK
@@ -325,41 +349,14 @@ export function MemoApp() {
               </div>
             )}
 
-            <input
-              ref={imgRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) {
-                  setImg(URL.createObjectURL(f));
-                  beep(880, 0.08);
-                }
-              }}
-            />
-            <input
-              ref={sndRef}
-              type="file"
-              accept="audio/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) {
-                  setSnd(f.name);
-                  beep(880, 0.08);
-                }
-              }}
-            />
-
             <div className="grid shrink-0 grid-cols-3 gap-2 text-sm">
-              <button onClick={() => { beep(440, 0.06); imgRef.current?.click(); }} className="border border-border py-1.5 hover:bg-primary hover:text-primary-foreground">
-                [+IMG]
+              <button onClick={() => { beep(440, 0.06); setAskAttach("IMG"); }} className="border border-border py-1.5 hover:bg-primary hover:text-primary-foreground">
+                [+IMG URL]
               </button>
-              <button onClick={() => { beep(494, 0.06); sndRef.current?.click(); }} className="border border-border py-1.5 hover:bg-primary hover:text-primary-foreground">
-                [+SND]
+              <button onClick={() => { beep(494, 0.06); setAskAttach("SND"); }} className="border border-border py-1.5 hover:bg-primary hover:text-primary-foreground">
+                [+SND URL]
               </button>
-              <button onClick={() => { beep(523, 0.06); setAskLink(true); }} className="border border-border py-1.5 hover:bg-primary hover:text-primary-foreground">
+              <button onClick={() => { beep(523, 0.06); setAskAttach("LNK"); }} className="border border-border py-1.5 hover:bg-primary hover:text-primary-foreground">
                 [+LNK]
               </button>
             </div>
@@ -367,12 +364,12 @@ export function MemoApp() {
             <button
               onClick={inscribe}
               disabled={busy}
-              className="shrink-0 border border-primary bg-primary py-2 text-base font-bold text-primary-foreground text-shadow-none hover:bg-foreground disabled:opacity-60"
+              className="shrink-0 border border-primary bg-primary py-2 text-base font-bold text-primary-foreground hover:bg-foreground disabled:opacity-60"
             >
-              {busy ? "\u2591\u2592\u2593 INSCRIBING \u2593\u2592\u2591" : "[ INSCRIBE MEMO ]"}
+              {busy ? "\u2591\u2592\u2593 INSCRIBING ON-CHAIN \u2593\u2592\u2591" : "[ INSCRIBE MEMO ]"}
             </button>
             <p className="shrink-0 text-center text-[10px] text-muted-foreground">
-              DEMO TERMINAL &#183; NOTHING IS SENT &#183; TRUST THE MEMO
+              REAL SOLANA MAINNET TX &#183; COSTS ~0.000005 SOL &#183; PERMANENT
             </p>
           </div>
         </Panel>
@@ -381,48 +378,40 @@ export function MemoApp() {
         <Panel
           label="MEMO FEED"
           right={
-            <span className="flex items-center gap-1.5">
+            <button onClick={() => { beep(587, 0.06); refreshFeed(); }} className="flex items-center gap-1.5 hover:text-foreground">
               <span className="size-1.5 bg-primary" />
-              LIVE
-            </span>
+              LIVE [&#8635;]
+            </button>
           }
         >
           <div className="min-h-0 flex-1 overflow-y-auto">
-            {feed.map((m) => (
-              <article key={m.id} className="border-b border-border/60 px-3 py-2.5 text-sm">
-                <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                  <span className="text-foreground">&gt; {m.from}</span>
-                  <span>&#183; {m.age === "now" ? "just now" : `${m.age} ago`}</span>
-                  <button
-                    onClick={() => { beep(587, 0.06); toast(`TX ${m.sig} \u00b7 SOLSCAN OPENS ON MAINNET [DEMO]`); }}
-                    className="ml-auto hover:text-foreground"
-                  >
-                    TX:{m.sig} [SOLSCAN]
-                  </button>
-                </p>
-                <p className="mt-1">{m.text}</p>
-                {m.img && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={m.img} alt="memo attachment" className="mt-2 size-20 border border-border object-cover" />
-                )}
-                {m.snd && (
-                  <button
-                    onClick={() => { playJingle(); toast("PLAYING ON-CHAIN AUDIO [DEMO]"); }}
-                    className="mt-2 border border-border px-2 py-1 text-xs hover:bg-primary hover:text-primary-foreground"
-                  >
-                    &#9654; PLAY 0:03 &#9834;
-                  </button>
-                )}
-                {m.lnk && (
-                  <button
-                    onClick={() => { beep(587, 0.06); toast(`LINK EMBEDDED IN MEMO: ${m.lnk} [DEMO]`); }}
-                    className="mt-2 block text-xs underline underline-offset-4 hover:text-accent"
-                  >
-                    &#8599; {m.lnk}
-                  </button>
-                )}
-              </article>
-            ))}
+            {feed === null ? (
+              <p className="p-4 text-sm text-muted-foreground">
+                SCANNING CHAIN<span className="animate-cursor">&#9608;</span>
+              </p>
+            ) : feed.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">
+                NO MEMOS INSCRIBED YET. CONNECT A WALLET AND BE THE FIRST.
+              </p>
+            ) : (
+              feed.map((m) => (
+                <article key={m.sig} className="border-b border-border/60 px-3 py-2.5 text-sm">
+                  <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                    <span className="text-foreground">&gt; {short(m.from)}</span>
+                    <span>&#183; {timeAgo(m.blockTime)} ago</span>
+                    <a
+                      href={`https://solscan.io/tx/${m.sig}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto hover:text-foreground"
+                    >
+                      TX:{short(m.sig)} [SOLSCAN]
+                    </a>
+                  </p>
+                  <MemoBody text={m.text} />
+                </article>
+              ))
+            )}
           </div>
         </Panel>
       </div>
@@ -451,7 +440,7 @@ export function MemoApp() {
           <span className="shrink-0">{copied ? "[OK]" : "[COPY]"}</span>
         </button>
         <span className="ml-auto hidden shrink-0 text-muted-foreground sm:inline">
-          MEMO LAYER: ONLINE
+          MEMO LAYER: MAINNET
         </span>
         <span className="shrink-0 text-muted-foreground">{clock ?? "--:--:-- UTC"}</span>
         <span className="animate-cursor -ml-1">&#9608;</span>

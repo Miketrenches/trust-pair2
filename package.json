@@ -11,6 +11,7 @@
   "dependencies": {
     "@radix-ui/react-separator": "^1.1.15",
     "@radix-ui/react-tabs": "^1.1.21",
+    "@solana/web3.js": "^1.99.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.38.0",
