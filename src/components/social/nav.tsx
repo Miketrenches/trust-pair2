@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export function SocialNav() {
@@ -6,9 +7,13 @@ export function SocialNav() {
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-primary font-display text-sm font-bold text-primary-foreground">
-            S
-          </span>
+          <Image
+            src="/logo.png"
+            alt="SOCIAL logo"
+            width={28}
+            height={28}
+            className="size-7 rounded-lg"
+          />
           <span className="font-display text-lg font-semibold tracking-tight">
             SOCIAL
           </span>
@@ -37,9 +42,13 @@ export function SocialFooter() {
     <footer className="border-t border-border/60">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6">
         <div className="flex items-center gap-2">
-          <span className="flex size-5 items-center justify-center rounded-md bg-primary font-display text-[11px] font-bold text-primary-foreground">
-            S
-          </span>
+          <Image
+            src="/logo.png"
+            alt="SOCIAL logo"
+            width={20}
+            height={20}
+            className="size-5 rounded-md"
+          />
           <span>SOCIAL — the basket layer on top of Paid</span>
         </div>
         <div className="flex items-center gap-4">
