@@ -1,24 +1,27 @@
 import type { Metadata } from "next";
-import { Share_Tech_Mono, VT323 } from "next/font/google";
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/toast";
 import "./globals.css";
 
-const term = Share_Tech_Mono({
-  variable: "--font-term",
+const body = Inter({
+  variable: "--font-body",
   subsets: ["latin"],
-  weight: "400",
 });
 
-const seg = VT323({
-  variable: "--font-seg",
+const display = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
-  weight: "400",
+});
+
+const mono = JetBrains_Mono({
+  variable: "--font-mono-var",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "MEMO · the memo layer of Solana",
+  title: "SOCIAL · route token fees to a basket of people",
   description:
-    "Embed pictures, sounds and links into Solana transaction memos. $MEMO — everything is a memo.",
+    "Built on Paid. Point a token's creator fees at a whole basket of X handles — KOLs, teams, ecosystems — and every member gets paid in dollars through X Money.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -26,7 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${term.variable} ${seg.variable} h-full antialiased`}
+      className={`${body.variable} ${display.variable} ${mono.variable} antialiased`}
     >
       <body>
         {children}
